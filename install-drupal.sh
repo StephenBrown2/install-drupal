@@ -192,17 +192,18 @@ echo -n "What is the solr root path? [${SOLR_LOCATION}/${SOLR_CORES_PATH}]: "
     SOLR_ROOT_PATH=${SOLR_LOCATION}/${SOLR_CORES_PATH}
   fi
 
-dr_opts="--root=${INSTALL_ROOT} "
-dr_opts+="--uri=${SITES_DIR} "
-dr_opts+="--db-url=mysql://${DRUPAL_DB_USER}:${DRUPAL_DB_PASS}@${DRUPAL_DB_HOST}:3306/${DRUPAL_DB_NAME} "
-dr_opts+="--sites-subdir=${SITES_DIR} "
-dr_opts+="--account-mail=${DRUPAL_ADMIN_EMAIL} "
-dr_opts+="--account-pass=${DRUPAL_ADMIN_PASS} "
-dr_opts+="--site-mail=${DRUPAL_SITE_EMAIL} "
-dr_opts+="--site-name=\"${DRUPAL_SITE_NAME}\" "
-dr_opts+="${DRUPAL_INSTALL_PROFILE}"
+dr_opts=("site-install")
+dr_opts+=("--root=${INSTALL_ROOT}")
+dr_opts+=("--uri=${SITES_DIR}")
+dr_opts+=("--db-url=mysql://${DRUPAL_DB_USER}:${DRUPAL_DB_PASS}@${DRUPAL_DB_HOST}:3306/${DRUPAL_DB_NAME}")
+dr_opts+=("--sites-subdir=${SITES_DIR}")
+dr_opts+=("--account-mail=${DRUPAL_ADMIN_EMAIL}")
+dr_opts+=("--account-pass=${DRUPAL_ADMIN_PASS}")
+dr_opts+=("--site-mail=${DRUPAL_SITE_EMAIL}")
+dr_opts+=("--site-name=${DRUPAL_SITE_NAME}")
+dr_opts+=("${DRUPAL_INSTALL_PROFILE}")
 echo
-echo drush site-install ${dr_opts}
+echo drush "${dr_opts[@]}"
 echo
 echo '******************************'
 echo 'Please confirm that all your answers above are correct.'
@@ -214,7 +215,15 @@ echo -n "If they are, please type 'continue', or press Ctrl-C to cancel: "
     exit
   fi
 
-drush site-install ${dr_opts} || echo "Failed to install." && exit 1
+drush "${dr_opts[@]}"
+
+if [[ $? != 0 ]]; then
+    echo "Failed to install."
+    exit 1
+else
+    site_name=$(drush --root=${INSTALL_ROOT}/sites/${SITES_DIR} vget site_name --exact)
+    echo "${site_name}" 'installed successfully!'
+fi
 
 chown -R ${SERVER_USER}:${SERVER_GROUP} ${INSTALL_ROOT}/sites/${SITES_DIR}/files
 
