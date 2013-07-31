@@ -234,6 +234,9 @@ if [ "$SOLR_MODULE_PATH" = "" ]; then
   SOLR_MODULE_PATH=`drush pm-info apachesolr 2>/dev/null | grep Path | awk -F: '{print $2}' | sed 's/\s//g'`
 fi
 
+echo
+echo 'Setting up solr core...'
+
 cp -r ${SOLR_ROOT_PATH}/d${DRUPAL_MAJOR}-start ${SOLR_ROOT_PATH}/${SOLR_CORE_NAME}
 
 SOLR_CONF_PATH="${INSTALL_ROOT}/${SOLR_MODULE_PATH}/solr-conf/solr-3.x"
@@ -253,19 +256,22 @@ done
 
 SOLR_ENV_URL="http://${SOLR_HOST}:${SOLR_PORT}/solr/${SOLR_CORE_NAME}"
 
+echo
 echo "Setting Solr Environment URL to '${SOLR_ENV_URL}'"
 drush solr-set-env-url "${SOLR_ENV_URL}"
+drush solr-get-env-url 2>/dev/null
 
+echo
 echo "Please add '<core name=\"$SOLR_CORE_NAME\" instanceDir=\"$SOLR_CORE_NAME\" />'"
 echo "to $SOLR_ROOT_PATH/solr.xml, and restart the solr service."
-echo ''
-echo 'Then make sure that there is a virtualhost entry for the site,'
-echo ''
-if [ "$INTERNAL_NAME" != "default" && ! grep "\$sites\['${SITE_URL}'\] = '${INTERNAL_NAME}';" ${INSTALL_ROOT}/sites/sites.php >/dev/null ]; then
-  echo "and make sure that there is a sites.php entry referencing $INTERNAL_NAME:"
+echo
+echo "Then make sure that there is a virtualhost entry for ${SITE_URL},"
+
+if [[ "$INTERNAL_NAME" != "default" ]] && ! grep "\$sites\['${SITE_URL}'\] = '${INTERNAL_NAME}';" ${INSTALL_ROOT}/sites/sites.php >/dev/null; then
+  echo "and make sure that there is an entry for $INTERNAL_NAME in ${INSTALL_ROOT}/sites/sites.php:"
   echo "\$sites['${SITE_URL}'] = '${INTERNAL_NAME}';" | tee -a ${INSTALL_ROOT}/sites/sites.php
-  echo ''
 fi
+
 echo 'and restart Apache, then we are done!'
 echo ''
 echo -n 'Would you like to add additional users now? (y/n): '
